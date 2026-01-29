@@ -1,9 +1,23 @@
 import mongoose, { Document, Schema } from "mongoose";
 
+interface SavedAddress {
+    label: string;
+    street: string;
+    city: string;
+    state: string;
+    pincode: string;
+    coordinates?: {
+        lat: number;
+        lng: number;
+    };
+    isDefault: boolean;
+}
+
 export interface IUser extends Document {
     name: string;
     email: string;
-    password: string;
+    password?: string;
+    googleId?: string;
     phone?: string;
     role: "customer" | "provider";
     address?: {
@@ -16,9 +30,23 @@ export interface IUser extends Document {
             lng: number;
         };
     };
+    savedAddresses?: SavedAddress[];
     createdAt: Date;
     updatedAt: Date;
 }
+
+const SavedAddressSchema = new Schema({
+    label: { type: String, required: true },
+    street: { type: String, required: true },
+    city: { type: String, required: true },
+    state: { type: String, default: "State" },
+    pincode: { type: String, required: true },
+    coordinates: {
+        lat: Number,
+        lng: Number,
+    },
+    isDefault: { type: Boolean, default: false },
+}, { _id: true });
 
 const UserSchema = new Schema<IUser>(
     {
@@ -36,9 +64,12 @@ const UserSchema = new Schema<IUser>(
         },
         password: {
             type: String,
-            required: [true, "Password is required"],
             minlength: 6,
             select: false, // Don't return password by default
+        },
+        googleId: {
+            type: String,
+            sparse: true,
         },
         phone: {
             type: String,
@@ -59,6 +90,7 @@ const UserSchema = new Schema<IUser>(
                 lng: Number,
             },
         },
+        savedAddresses: [SavedAddressSchema],
     },
     {
         timestamps: true,

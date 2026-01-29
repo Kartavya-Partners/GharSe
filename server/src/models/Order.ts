@@ -18,7 +18,14 @@ export interface IOrder extends Document {
             lng: number;
         };
     };
+    deliveryInstructions?: string;
     paymentStatus: "pending" | "paid" | "refunded";
+    // Snapshot for order history preservation when tiffin is deleted
+    tiffinSnapshot: {
+        name: string;
+        price: number;
+        type: string;
+    };
     createdAt: Date;
     updatedAt: Date;
 }
@@ -70,10 +77,19 @@ const OrderSchema = new Schema<IOrder>(
                 lng: Number,
             },
         },
+        deliveryInstructions: {
+            type: String,
+            default: "",
+        },
         paymentStatus: {
             type: String,
             enum: ["pending", "paid", "refunded"],
             default: "pending",
+        },
+        tiffinSnapshot: {
+            name: { type: String, required: true },
+            price: { type: Number, required: true },
+            type: { type: String, required: true },
         },
     },
     {

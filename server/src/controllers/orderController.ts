@@ -12,7 +12,7 @@ interface AuthRequest extends Request {
 // @access  Private (Customer)
 export const createOrder = async (req: any, res: Response): Promise<void> => {
     try {
-        const { tiffinId, quantity, deliveryDate, deliveryAddress } = req.body;
+        const { tiffinId, quantity, deliveryDate, deliveryAddress, deliveryInstructions } = req.body;
 
         const tiffin = await Tiffin.findById(tiffinId);
 
@@ -60,7 +60,14 @@ export const createOrder = async (req: any, res: Response): Promise<void> => {
             quantity,
             totalPrice,
             deliveryAddress,
+            deliveryInstructions: deliveryInstructions || "",
             status: "pending",
+            // Store snapshot for order history preservation
+            tiffinSnapshot: {
+                name: tiffin.name,
+                price: tiffin.price,
+                type: tiffin.type,
+            },
         });
 
         const createdOrder = await order.save();

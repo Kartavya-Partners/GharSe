@@ -6,10 +6,14 @@ import {
     updateTiffin,
     deleteTiffin,
     getMyTiffins,
+    getNearbyTiffins,
 } from "../controllers/tiffinController.js";
 import { protect, authorize } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
+
+// Public routes
+router.get("/nearby", getNearbyTiffins);
 
 router.route("/")
     .get(getTiffins)

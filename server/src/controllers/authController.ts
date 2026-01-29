@@ -59,7 +59,20 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
 
         const user = await User.findOne({ email }).select("+password");
 
-        if (user && (await bcrypt.compare(password, user.password))) {
+        if (!user) {
+            res.status(401).json({ message: "Invalid email or password" });
+            return;
+        }
+
+        // Check if user has password (OAuth users may not have one)
+        if (!user.password) {
+            res.status(401).json({ message: "Please login with Google" });
+            return;
+        }
+
+        const isPasswordMatch = await bcrypt.compare(password, user.password);
+
+        if (isPasswordMatch) {
             res.json({
                 _id: user.id,
                 name: user.name,
@@ -94,6 +107,78 @@ export const getUserProfile = async (req: any, res: Response): Promise<void> => 
             res.status(404).json({ message: "User not found" });
         }
     } catch (error: any) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Google OAuth login (customers only)
+// @route   POST /api/auth/google
+// @access  Public
+export const googleLogin = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { credential } = req.body;
+
+        if (!credential) {
+            res.status(400).json({ message: "Google credential is required" });
+            return;
+        }
+
+        // Verify Google token
+        const response = await fetch(
+            `https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`
+        );
+
+        if (!response.ok) {
+            res.status(401).json({ message: "Invalid Google token" });
+            return;
+        }
+
+        const googleUser = await response.json();
+        const { sub: googleId, email, name, picture } = googleUser;
+
+        if (!email) {
+            res.status(400).json({ message: "Email not provided by Google" });
+            return;
+        }
+
+        // Check if user exists by googleId or email
+        let user = await User.findOne({
+            $or: [{ googleId }, { email }]
+        });
+
+        if (user) {
+            // If user exists but doesn't have googleId, link it
+            if (!user.googleId) {
+                user.googleId = googleId;
+                await user.save();
+            }
+
+            // Check if user is a provider (providers should not use Google login)
+            if (user.role === "provider") {
+                res.status(400).json({
+                    message: "Providers should login with email and password"
+                });
+                return;
+            }
+        } else {
+            // Create new customer user
+            user = await User.create({
+                googleId,
+                email,
+                name: name || email.split("@")[0],
+                role: "customer",
+            });
+        }
+
+        res.json({
+            _id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            token: generateToken(user.id, user.role),
+        });
+    } catch (error: any) {
+        console.error("Google login error:", error);
         res.status(500).json({ message: error.message });
     }
 };
