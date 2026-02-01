@@ -14,7 +14,7 @@ const getWeekStart = (date: Date = new Date()): Date => {
 // @desc    Get provider's weekly menu
 // @route   GET /api/weekly-menu/:providerId
 // @access  Public
-export const getWeeklyMenu = async (req: Request, res: Response): Promise<void> => {
+export const getWeeklyMenu = async (req: Request<{ providerId: string }>, res: Response): Promise<void> => {
     try {
         const { providerId } = req.params;
         const weekStart = getWeekStart();
