@@ -46,8 +46,9 @@ interface SavedAddress {
 
 interface Order {
     _id: string;
-    tiffin: { name: string };
-    provider: { name: string };
+    tiffin: { name: string } | null;
+    tiffinSnapshot?: { name: string; price: number; type: string };
+    provider: { name: string } | null;
     totalPrice: number;
     status: string;
     deliveryDate: string;
@@ -400,7 +401,7 @@ export default function ProfilePage() {
                                     <Link key={order._id} href="/orders">
                                         <div className="p-4 rounded-xl bg-gray-50 border hover:border-orange-300 transition-colors cursor-pointer">
                                             <div className="flex items-center justify-between mb-2">
-                                                <span className="font-medium text-gray-900">{order.tiffin.name}</span>
+                                                <span className="font-medium text-gray-900">{order.tiffin?.name || order.tiffinSnapshot?.name || "Deleted Item"}</span>
                                                 <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${order.status === "delivered" ? "bg-green-100 text-green-700" :
                                                     order.status === "cancelled" ? "bg-red-100 text-red-700" :
                                                         "bg-orange-100 text-orange-700"
@@ -409,7 +410,7 @@ export default function ProfilePage() {
                                                 </span>
                                             </div>
                                             <div className="flex items-center gap-4 text-sm text-gray-500">
-                                                <span>{order.provider.name}</span>
+                                                <span>{order.provider?.name || "Unknown Provider"}</span>
                                                 <span className="flex items-center gap-1">
                                                     <Calendar className="w-3 h-3" />
                                                     {new Date(order.deliveryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}

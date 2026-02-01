@@ -17,7 +17,18 @@ import { startCleanupJob } from "./utils/cleanup.js";
 dotenv.config();
 
 const app = express();
-app.use(cors());
+
+// CORS configuration for production
+const allowedOrigins = [
+    process.env.FRONTEND_URL,
+    "http://localhost:3000",
+].filter((origin): origin is string => Boolean(origin));
+
+app.use(cors({
+    origin: allowedOrigins,
+    credentials: true
+}));
+
 app.use(express.json({ limit: "5mb" }));
 
 app.get("/", (req, res) => {
