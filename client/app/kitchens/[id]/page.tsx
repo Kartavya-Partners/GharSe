@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { useAuth } from "@/context/AuthContext";
+import { useCart } from "@/context/CartContext";
+import CartSidebar from "@/components/CartSidebar";
+import NotificationDropdown from "@/components/NotificationDropdown";
 import { Button } from "@/components/ui/button";
 import {
     ArrowLeft,
@@ -94,6 +97,9 @@ export default function KitchenDetailPage({ params }: { params: Promise<{ id: st
     const [error, setError] = useState("");
     const [activeTab, setActiveTab] = useState<"menu" | "weekly">("menu");
 
+    const { cartCount, addToCart } = useCart();
+    const [isCartOpen, setIsCartOpen] = useState(false);
+
     // Redirect if not authenticated
     useEffect(() => {
         if (!authLoading && !isAuthenticated) {
@@ -166,17 +172,32 @@ export default function KitchenDetailPage({ params }: { params: Promise<{ id: st
             {/* Header */}
             <header className="sticky top-0 z-50 bg-white border-b shadow-sm">
                 <div className="max-w-4xl mx-auto px-4 py-4">
-                    <div className="flex items-center gap-4">
-                        <button onClick={() => router.back()} className="text-gray-600 hover:text-gray-900">
-                            <ArrowLeft className="w-6 h-6" />
-                        </button>
-                        <div>
-                            <h1 className="text-lg font-semibold text-gray-900">{provider.name}&apos;s Kitchen</h1>
-                            <p className="text-sm text-gray-500">{stats.totalTiffins} meals available</p>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <button onClick={() => router.back()} className="text-gray-600 hover:text-gray-900">
+                                <ArrowLeft className="w-6 h-6" />
+                            </button>
+                            <div>
+                                <h1 className="text-lg font-semibold text-gray-900">{provider.name}&apos;s Kitchen</h1>
+                                <p className="text-sm text-gray-500">{stats.totalTiffins} meals available</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <NotificationDropdown />
+                            <button onClick={() => setIsCartOpen(true)} className="relative p-2 rounded-full hover:bg-gray-100 text-gray-600 transition-colors">
+                                <ShoppingBag className="w-5 h-5" />
+                                {cartCount > 0 && (
+                                    <span className="absolute top-0 right-0 w-4 h-4 bg-orange-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full">
+                                        {cartCount > 9 ? '9+' : cartCount}
+                                    </span>
+                                )}
+                            </button>
                         </div>
                     </div>
                 </div>
             </header>
+
+            <CartSidebar isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
             <main className="max-w-4xl mx-auto px-4 py-6">
                 {/* Kitchen Card */}
@@ -249,8 +270,8 @@ export default function KitchenDetailPage({ params }: { params: Promise<{ id: st
                     <button
                         onClick={() => setActiveTab("menu")}
                         className={`flex-1 py-3 rounded-xl font-semibold transition-all ${activeTab === "menu"
-                                ? "bg-green-500 text-white shadow-md"
-                                : "bg-white text-gray-600 border hover:bg-gray-50"
+                            ? "bg-green-500 text-white shadow-md"
+                            : "bg-white text-gray-600 border hover:bg-gray-50"
                             }`}
                     >
                         <UtensilsCrossed className="w-5 h-5 inline mr-2" />
@@ -259,8 +280,8 @@ export default function KitchenDetailPage({ params }: { params: Promise<{ id: st
                     <button
                         onClick={() => setActiveTab("weekly")}
                         className={`flex-1 py-3 rounded-xl font-semibold transition-all ${activeTab === "weekly"
-                                ? "bg-green-500 text-white shadow-md"
-                                : "bg-white text-gray-600 border hover:bg-gray-50"
+                            ? "bg-green-500 text-white shadow-md"
+                            : "bg-white text-gray-600 border hover:bg-gray-50"
                             }`}
                     >
                         <Calendar className="w-5 h-5 inline mr-2" />
@@ -324,10 +345,21 @@ export default function KitchenDetailPage({ params }: { params: Promise<{ id: st
                                                 <Button
                                                     size="sm"
                                                     className="bg-gradient-to-r from-orange-500 to-red-500"
-                                                    onClick={() => router.push(`/checkout?tiffinId=${tiffin._id}&quantity=1`)}
+                                                    onClick={() => {
+                                                        addToCart({
+                                                            tiffinId: tiffin._id,
+                                                            name: tiffin.name,
+                                                            price: tiffin.price,
+                                                            quantity: 1,
+                                                            providerId: provider._id,
+                                                            type: tiffin.type,
+                                                            image: tiffin.images?.[0] || "",
+                                                        });
+                                                        setIsCartOpen(true);
+                                                    }}
                                                 >
                                                     <ShoppingBag className="w-4 h-4 mr-1" />
-                                                    Order
+                                                    Add to Cart
                                                 </Button>
                                             </div>
                                         </div>

@@ -1,55 +1,49 @@
-console.log("🔥 Booting GharSe backend...");
-
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/database.js";
+
+// Routes
 import authRoutes from "./routes/authRoutes.js";
 import tiffinRoutes from "./routes/tiffinRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import subscriptionRoutes from "./routes/subscriptionRoutes.js";
-import weeklyMenuRoutes from "./routes/weeklyMenuRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import providerRoutes from "./routes/providerRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
-import { startCleanupJob } from "./utils/cleanup.js";
+import weeklyMenuRoutes from "./routes/weeklyMenuRoutes.js";
 
+// Load env vars
 dotenv.config();
 
 const app = express();
 
-// CORS configuration for production
-const allowedOrigins = [
-    process.env.FRONTEND_URL,
-    "http://localhost:3000",
-].filter((origin): origin is string => Boolean(origin));
+console.log("🔥 Booting GharSe backend...");
 
-app.use(cors({
-    origin: allowedOrigins,
-    credentials: true
-}));
+// Middleware
+app.use(cors());
+app.use(express.json());
 
-app.use(express.json({ limit: "5mb" }));
-
-app.get("/", (req, res) => {
-    res.send("GharSe API is running");
-});
-
+// Routes setup
 app.use("/api/auth", authRoutes);
 app.use("/api/tiffins", tiffinRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
-app.use("/api/weekly-menu", weeklyMenuRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/providers", providerRoutes);
-app.use("/api/upload", uploadRoutes);
+app.use("/api/uploads", uploadRoutes);
+app.use("/api/weekly-menu", weeklyMenuRoutes);
+
+// Health check
+app.get("/", (req, res) => {
+    res.send("GharSe API is running");
+});
 
 const PORT = process.env.PORT || 8000;
 
 // Connect to MongoDB then start server
 connectDB().then(() => {
     app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
-
-    // Start the cleanup job for expired tiffins
-    startCleanupJob();
+}).catch(err => {
+    console.error("Failed to connect to MongoDB", err);
 });

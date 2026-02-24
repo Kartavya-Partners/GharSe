@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
@@ -214,89 +214,102 @@ function LoginForm() {
     // Show loading while checking auth
     if (authLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-[var(--color-warm-white)]">
-                <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+            <div className="min-h-screen flex items-center justify-center bg-[#0f1a15]">
+                <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen flex">
-            {/* ========== LEFT PANEL - Decorative ========== */}
-            <div
-                className={`hidden lg:flex lg:w-1/2 relative overflow-hidden ${isProvider
-                    ? "bg-gradient-to-br from-green-500 via-emerald-500 to-teal-600"
-                    : "bg-gradient-to-br from-orange-500 via-red-500 to-rose-500"
-                    }`}
-            >
-                {/* Decorative Blobs */}
-                <div className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
-                <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-white/5 rounded-full blur-2xl" />
+        <div className="min-h-screen flex bg-[#0f1a15]">
+            {/* ========== LEFT PANEL - Dark Decorative ========== */}
+            <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-[#0d1a14]">
+                {/* Background gradient blobs */}
+                <div className="absolute top-0 left-0 w-96 h-96 bg-teal-600/10 rounded-full blur-3xl" />
+                <div className="absolute bottom-0 right-0 w-96 h-96 bg-teal-600/10 rounded-full blur-3xl" />
+                <div className="absolute top-1/3 right-1/4 w-72 h-72 bg-emerald-500/5 rounded-full blur-2xl" />
 
                 {/* Content */}
                 <div className="relative z-10 flex flex-col justify-between p-12 w-full">
                     {/* Logo */}
-                    <Link href="/" className="flex items-center text-white group">
-                        <Image
-                            src="/logo.png"
-                            alt="GharSe"
-                            width={80}
-                            height={80}
-                            className="h-16 w-auto"
-                        />
+                    <Link href="/" className="flex items-center gap-2">
+                        <div className="bg-teal-600 p-1.5 rounded-lg">
+                            <ChefHat className="w-5 h-5 text-white" />
+                        </div>
+                        <span className="text-xl font-bold text-white">GharSe</span>
                     </Link>
 
-                    {/* Center Illustration */}
-                    <div className="flex-1 flex items-center justify-center py-12">
+                    {/* Center Content */}
+                    <div className="flex-1 flex flex-col items-center justify-center py-12">
                         <motion.div
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ duration: 0.5 }}
-                            className="relative"
+                            className="relative w-full max-w-md"
                         >
-                            <div className="absolute inset-0 bg-white/10 rounded-3xl blur-xl" />
-                            <div className="relative bg-white/10 backdrop-blur-sm rounded-3xl p-4 border border-white/20">
-                                <Image
-                                    src={isProvider ? "/auth-provider.png" : "/auth-customer.png"}
-                                    alt={isProvider ? "Provider" : "Customer"}
-                                    width={400}
-                                    height={400}
-                                    className="rounded-2xl"
-                                />
+                            {/* Badge */}
+                            <div className="inline-flex items-center gap-2 px-4 py-2 bg-teal-500/10 border border-teal-500/20 rounded-full text-sm text-teal-400 font-medium mb-6">
+                                {isProvider ? (
+                                    <>
+                                        <ChefHat className="w-4 h-4" />
+                                        Chef Partner Program
+                                    </>
+                                ) : (
+                                    <>
+                                        <ShoppingBag className="w-4 h-4" />
+                                        Homemade Meals Delivered
+                                    </>
+                                )}
+                            </div>
+
+                            <h2 className="text-4xl font-extrabold text-white mb-4 tracking-tight leading-tight">
+                                {isProvider
+                                    ? "Turn your kitchen into a thriving business."
+                                    : "Craving fresh, homemade food?"}
+                            </h2>
+                            <p className="text-gray-400 text-lg leading-relaxed mb-8">
+                                {isProvider
+                                    ? "Join over 5,000 home chefs already earning from their passion for cooking."
+                                    : "Discover trusted home chefs in your neighborhood serving hygienic meals daily."}
+                            </p>
+
+                            {/* Trust Avatars */}
+                            <div className="flex items-center gap-3">
+                                <div className="flex -space-x-2">
+                                    {[
+                                        "bg-gradient-to-br from-amber-300 to-orange-400",
+                                        "bg-gradient-to-br from-teal-300 to-emerald-400",
+                                        "bg-gradient-to-br from-violet-300 to-purple-400",
+                                        "bg-gradient-to-br from-rose-300 to-pink-400",
+                                    ].map((bg, i) => (
+                                        <div key={i} className={`w-9 h-9 rounded-full ${bg} border-2 border-[#0d1a14] flex items-center justify-center text-white text-xs font-bold`}>
+                                            {["S", "A", "R", "P"][i]}
+                                        </div>
+                                    ))}
+                                </div>
+                                <span className="text-sm text-gray-500">Trusted by top home chefs</span>
                             </div>
                         </motion.div>
                     </div>
 
-                    {/* Bottom Text */}
-                    <div className="text-white">
-                        <h2 className="text-3xl font-bold mb-3">
-                            {isProvider
-                                ? "Turn your kitchen into a business"
-                                : "Craving homemade food?"}
-                        </h2>
-                        <p className="text-white/80 text-lg">
-                            {isProvider
-                                ? "Join thousands of home chefs earning from their passion for cooking."
-                                : "Discover trusted home chefs in your neighborhood serving fresh, hygienic meals daily."}
-                        </p>
+                    {/* Bottom / App links */}
+                    <div className="text-gray-600 text-sm">
+                        Â© 2025 GharSe. All rights reserved.
                     </div>
                 </div>
             </div>
 
-            {/* ========== RIGHT PANEL - Form ========== */}
-            <div className="flex-1 flex flex-col bg-[var(--color-warm-white)]">
+            {/* ========== RIGHT PANEL - Dark Form ========== */}
+            <div className="flex-1 flex flex-col">
                 {/* Mobile Header */}
-                <div className="lg:hidden flex items-center justify-between p-4 border-b bg-white/80 backdrop-blur sticky top-0 z-10">
-                    <Link href="/" className="flex items-center">
-                        <Image
-                            src="/logo.png"
-                            alt="GharSe"
-                            width={72}
-                            height={72}
-                            className="h-12 w-auto"
-                        />
+                <div className="lg:hidden flex items-center justify-between p-4 border-b border-white/5 bg-[#0d1a14]">
+                    <Link href="/" className="flex items-center gap-2">
+                        <div className="bg-teal-600 p-1.5 rounded-lg">
+                            <ChefHat className="w-4 h-4 text-white" />
+                        </div>
+                        <span className="text-lg font-bold text-white">GharSe</span>
                     </Link>
+                    <Link href="/" className="text-sm text-teal-400 hover:text-teal-300">Need help?</Link>
                 </div>
 
                 {/* Form Container */}
@@ -310,7 +323,7 @@ function LoginForm() {
                         {/* Back Link - Desktop */}
                         <Link
                             href="/"
-                            className="hidden lg:inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors mb-8 group"
+                            className="hidden lg:inline-flex items-center gap-2 text-gray-500 hover:text-gray-300 transition-colors mb-8 group"
                         >
                             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                             <span>Back to home</span>
@@ -320,8 +333,8 @@ function LoginForm() {
                         <div className="text-center lg:text-left mb-8">
                             <div
                                 className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium mb-4 ${isProvider
-                                    ? "bg-green-100 text-green-700"
-                                    : "bg-orange-100 text-orange-700"
+                                    ? "bg-teal-500/10 text-teal-400 border border-teal-500/20"
+                                    : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
                                     }`}
                             >
                                 {isProvider ? (
@@ -332,26 +345,26 @@ function LoginForm() {
                                 <span>{isProvider ? "Provider" : "Customer"} Account</span>
                             </div>
 
-                            <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
-                                {isLogin ? "Welcome back!" : "Create account"}
+                            <h1 className="text-3xl lg:text-4xl font-bold text-white mb-2">
+                                {isLogin ? "Welcome back!" : isProvider ? "Become a GharSe Chef" : "Create account"}
                             </h1>
-                            <p className="text-gray-600">
+                            <p className="text-gray-500">
                                 {isLogin
-                                    ? "Sign in to continue to your account"
+                                    ? "Sign in to continue to your dashboard"
                                     : isProvider
                                         ? "Start your journey as a home chef"
-                                        : "Quick signup - takes less than a minute"}
+                                        : "Quick signup â€” takes less than a minute"}
                             </p>
                         </div>
 
                         {/* Role Switcher */}
-                        <div className="flex p-1.5 bg-gray-100 rounded-xl mb-8">
+                        <div className="flex p-1.5 bg-[#1a2b23] rounded-xl mb-8 border border-white/5">
                             <button
                                 type="button"
                                 onClick={() => setRole("customer")}
                                 className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-semibold transition-all ${role === "customer"
-                                    ? "bg-white text-gray-900 shadow-md"
-                                    : "text-gray-500 hover:text-gray-700"
+                                    ? "bg-teal-600 text-white shadow-lg"
+                                    : "text-gray-500 hover:text-gray-300"
                                     }`}
                             >
                                 <ShoppingBag className="w-4 h-4" />
@@ -361,8 +374,8 @@ function LoginForm() {
                                 type="button"
                                 onClick={() => setRole("provider")}
                                 className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-semibold transition-all ${role === "provider"
-                                    ? "bg-white text-gray-900 shadow-md"
-                                    : "text-gray-500 hover:text-gray-700"
+                                    ? "bg-teal-600 text-white shadow-lg"
+                                    : "text-gray-500 hover:text-gray-300"
                                     }`}
                             >
                                 <ChefHat className="w-4 h-4" />
@@ -380,10 +393,10 @@ function LoginForm() {
                                         initial={{ opacity: 0, height: 0 }}
                                         animate={{ opacity: 1, height: "auto" }}
                                         exit={{ opacity: 0, height: 0 }}
-                                        className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3"
+                                        className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3"
                                     >
-                                        <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                                        <span className="text-sm text-red-700">{error}</span>
+                                        <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                                        <span className="text-sm text-red-300">{error}</span>
                                     </motion.div>
                                 )}
                             </AnimatePresence>
@@ -398,11 +411,11 @@ function LoginForm() {
                                         exit={{ opacity: 0, height: 0 }}
                                         className="space-y-2"
                                     >
-                                        <Label htmlFor="name" className="text-gray-700 font-medium">
+                                        <Label htmlFor="name" className="text-gray-300 font-medium">
                                             Full Name
                                         </Label>
                                         <div className="relative">
-                                            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                                             <Input
                                                 id="name"
                                                 name="name"
@@ -410,7 +423,7 @@ function LoginForm() {
                                                 required={!isLogin}
                                                 value={formData.name}
                                                 onChange={handleChange}
-                                                className="h-12 pl-12 bg-white border-gray-200 focus:border-orange-400 focus:ring-orange-400 rounded-xl"
+                                                className="h-12 pl-12 bg-[#1a2b23] border-white/10 text-white placeholder:text-gray-600 focus:border-teal-500/50 focus:ring-teal-500/30 rounded-xl"
                                             />
                                         </div>
                                     </motion.div>
@@ -419,11 +432,11 @@ function LoginForm() {
 
                             {/* Email Field */}
                             <div className="space-y-2">
-                                <Label htmlFor="email" className="text-gray-700 font-medium">
+                                <Label htmlFor="email" className="text-gray-300 font-medium">
                                     Email Address
                                 </Label>
                                 <div className="relative">
-                                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                                     <Input
                                         id="email"
                                         name="email"
@@ -432,7 +445,7 @@ function LoginForm() {
                                         required
                                         value={formData.email}
                                         onChange={handleChange}
-                                        className="h-12 pl-12 bg-white border-gray-200 focus:border-orange-400 focus:ring-orange-400 rounded-xl"
+                                        className="h-12 pl-12 bg-[#1a2b23] border-white/10 text-white placeholder:text-gray-600 focus:border-teal-500/50 focus:ring-teal-500/30 rounded-xl"
                                     />
                                 </div>
                             </div>
@@ -442,38 +455,35 @@ function LoginForm() {
                                 <div className="flex items-center justify-between">
                                     <Label
                                         htmlFor="password"
-                                        className="text-gray-700 font-medium"
+                                        className="text-gray-300 font-medium"
                                     >
                                         Password
                                     </Label>
                                     {isLogin && (
                                         <button
                                             type="button"
-                                            className={`text-sm font-medium ${isProvider
-                                                ? "text-green-600 hover:text-green-700"
-                                                : "text-orange-600 hover:text-orange-700"
-                                                }`}
+                                            className="text-sm font-medium text-teal-400 hover:text-teal-300"
                                         >
                                             Forgot password?
                                         </button>
                                     )}
                                 </div>
                                 <div className="relative">
-                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                                     <Input
                                         id="password"
                                         name="password"
                                         type={showPassword ? "text" : "password"}
-                                        placeholder="••••••••"
+                                        placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                                         required
                                         value={formData.password}
                                         onChange={handleChange}
-                                        className="h-12 pl-12 pr-12 bg-white border-gray-200 focus:border-orange-400 focus:ring-orange-400 rounded-xl"
+                                        className="h-12 pl-12 pr-12 bg-[#1a2b23] border-white/10 text-white placeholder:text-gray-600 focus:border-teal-500/50 focus:ring-teal-500/30 rounded-xl"
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
                                     >
                                         {showPassword ? (
                                             <EyeOff className="w-5 h-5" />
@@ -483,7 +493,7 @@ function LoginForm() {
                                     </button>
                                 </div>
                                 {!isLogin && (
-                                    <p className="text-xs text-gray-500">
+                                    <p className="text-xs text-gray-600">
                                         Must be at least 6 characters
                                     </p>
                                 )}
@@ -499,8 +509,8 @@ function LoginForm() {
                                         exit={{ opacity: 0, height: 0 }}
                                         className="space-y-5 pt-2"
                                     >
-                                        <div className="flex items-center gap-2 text-gray-700">
-                                            <MapPin className="w-4 h-4 text-green-600" />
+                                        <div className="flex items-center gap-2 text-gray-300">
+                                            <MapPin className="w-4 h-4 text-teal-400" />
                                             <span className="font-semibold text-sm">
                                                 Kitchen Location
                                             </span>
@@ -509,12 +519,12 @@ function LoginForm() {
                                         <div className="space-y-2">
                                             <Label
                                                 htmlFor="street"
-                                                className="text-gray-700 font-medium"
+                                                className="text-gray-300 font-medium"
                                             >
                                                 Street Address
                                             </Label>
                                             <div className="relative">
-                                                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                                                 <Input
                                                     id="street"
                                                     name="street"
@@ -522,7 +532,7 @@ function LoginForm() {
                                                     required={!isLogin && isProvider}
                                                     value={formData.street}
                                                     onChange={handleChange}
-                                                    className="h-12 pl-12 bg-white border-gray-200 rounded-xl"
+                                                    className="h-12 pl-12 bg-[#1a2b23] border-white/10 text-white placeholder:text-gray-600 rounded-xl"
                                                 />
                                             </div>
                                         </div>
@@ -531,12 +541,12 @@ function LoginForm() {
                                             <div className="space-y-2">
                                                 <Label
                                                     htmlFor="city"
-                                                    className="text-gray-700 font-medium"
+                                                    className="text-gray-300 font-medium"
                                                 >
                                                     City
                                                 </Label>
                                                 <div className="relative">
-                                                    <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                                    <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                                                     <Input
                                                         id="city"
                                                         name="city"
@@ -544,19 +554,19 @@ function LoginForm() {
                                                         required={!isLogin && isProvider}
                                                         value={formData.city}
                                                         onChange={handleChange}
-                                                        className="h-12 pl-12 bg-white border-gray-200 rounded-xl"
+                                                        className="h-12 pl-12 bg-[#1a2b23] border-white/10 text-white placeholder:text-gray-600 rounded-xl"
                                                     />
                                                 </div>
                                             </div>
                                             <div className="space-y-2">
                                                 <Label
                                                     htmlFor="pincode"
-                                                    className="text-gray-700 font-medium"
+                                                    className="text-gray-300 font-medium"
                                                 >
                                                     Pincode
                                                 </Label>
                                                 <div className="relative">
-                                                    <Hash className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                                    <Hash className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                                                     <Input
                                                         id="pincode"
                                                         name="pincode"
@@ -564,7 +574,7 @@ function LoginForm() {
                                                         required={!isLogin && isProvider}
                                                         value={formData.pincode}
                                                         onChange={handleChange}
-                                                        className="h-12 pl-12 bg-white border-gray-200 rounded-xl"
+                                                        className="h-12 pl-12 bg-[#1a2b23] border-white/10 text-white placeholder:text-gray-600 rounded-xl"
                                                     />
                                                 </div>
                                             </div>
@@ -572,8 +582,8 @@ function LoginForm() {
 
                                         {/* GPS Location Capture */}
                                         <div className="space-y-3 pt-2">
-                                            <Label className="text-gray-700 font-medium flex items-center gap-2">
-                                                <Crosshair className="w-4 h-4 text-green-600" />
+                                            <Label className="text-gray-300 font-medium flex items-center gap-2">
+                                                <Crosshair className="w-4 h-4 text-teal-400" />
                                                 GPS Location
                                             </Label>
                                             <button
@@ -581,8 +591,8 @@ function LoginForm() {
                                                 onClick={getLocation}
                                                 disabled={isGettingLocation}
                                                 className={`w-full h-12 flex items-center justify-center gap-2 rounded-xl border-2 border-dashed transition-all ${coordinates
-                                                    ? "border-green-500 bg-green-50 text-green-700"
-                                                    : "border-gray-300 hover:border-green-400 hover:bg-green-50 text-gray-600"
+                                                    ? "border-teal-500/50 bg-teal-500/5 text-teal-400"
+                                                    : "border-white/10 hover:border-teal-500/30 hover:bg-teal-500/5 text-gray-500"
                                                     }`}
                                             >
                                                 {isGettingLocation ? (
@@ -603,12 +613,12 @@ function LoginForm() {
                                                 )}
                                             </button>
                                             {locationError && (
-                                                <p className="text-xs text-red-500 flex items-center gap-1">
+                                                <p className="text-xs text-red-400 flex items-center gap-1">
                                                     <AlertCircle className="w-3 h-3" />
                                                     {locationError}
                                                 </p>
                                             )}
-                                            <p className="text-xs text-gray-500">
+                                            <p className="text-xs text-gray-600">
                                                 This helps customers find you based on their location
                                             </p>
                                         </div>
@@ -620,10 +630,7 @@ function LoginForm() {
                             <Button
                                 type="submit"
                                 disabled={isLoading}
-                                className={`w-full h-13 text-base font-semibold rounded-xl shadow-lg transition-all hover:-translate-y-0.5 ${isProvider
-                                    ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
-                                    : "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
-                                    } disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0`}
+                                className="w-full h-13 text-base font-semibold rounded-xl shadow-lg transition-all hover:-translate-y-0.5 bg-teal-600 hover:bg-teal-700 text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
                             >
                                 {isLoading ? (
                                     <>
@@ -645,10 +652,10 @@ function LoginForm() {
                                 <div className="mt-4">
                                     <div className="relative">
                                         <div className="absolute inset-0 flex items-center">
-                                            <div className="w-full border-t border-gray-200" />
+                                            <div className="w-full border-t border-white/10" />
                                         </div>
                                         <div className="relative flex justify-center text-sm">
-                                            <span className="px-4 bg-[var(--color-warm-white)] text-gray-500">
+                                            <span className="px-4 bg-[#0f1a15] text-gray-500">
                                                 or continue with
                                             </span>
                                         </div>
@@ -663,7 +670,7 @@ function LoginForm() {
                                             <GoogleLogin
                                                 onSuccess={handleGoogleLogin}
                                                 onError={() => setError("Google login failed")}
-                                                theme="outline"
+                                                theme="filled_black"
                                                 size="large"
                                                 text="continue_with"
                                                 shape="rectangular"
@@ -677,15 +684,12 @@ function LoginForm() {
 
                         {/* Toggle Mode */}
                         <div className="mt-8 text-center">
-                            <p className="text-gray-600">
+                            <p className="text-gray-500">
                                 {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
                                 <button
                                     type="button"
                                     onClick={toggleMode}
-                                    className={`font-semibold ${isProvider
-                                        ? "text-green-600 hover:text-green-700"
-                                        : "text-orange-600 hover:text-orange-700"
-                                        }`}
+                                    className="font-semibold text-teal-400 hover:text-teal-300"
                                 >
                                     {isLogin ? "Sign up" : "Sign in"}
                                 </button>
@@ -694,7 +698,7 @@ function LoginForm() {
 
                         {/* Trust Badge */}
                         <div className="mt-8 text-center">
-                            <p className="text-xs text-gray-400 flex items-center justify-center gap-1">
+                            <p className="text-xs text-gray-600 flex items-center justify-center gap-1">
                                 <Lock className="w-3 h-3" />
                                 Your data is encrypted and secure
                             </p>
@@ -710,10 +714,10 @@ export default function LoginPage() {
     return (
         <Suspense
             fallback={
-                <div className="min-h-screen flex items-center justify-center bg-[var(--color-warm-white)]">
+                <div className="min-h-screen flex items-center justify-center bg-[#0f1a15]">
                     <div className="flex items-center gap-3">
-                        <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
-                        <span className="text-gray-600">Loading...</span>
+                        <Loader2 className="w-6 h-6 animate-spin text-teal-500" />
+                        <span className="text-gray-400">Loading...</span>
                     </div>
                 </div>
             }
@@ -722,3 +726,4 @@ export default function LoginPage() {
         </Suspense>
     );
 }
+

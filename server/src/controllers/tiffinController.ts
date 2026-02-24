@@ -168,7 +168,7 @@ const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: numbe
 // @access  Public
 export const getNearbyTiffins = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { lat, lng, radius = 15, type, mealType } = req.query;
+        const { lat, lng, radius = 15, type, mealType, search, minPrice, maxPrice, sort } = req.query;
 
         if (!lat || !lng) {
             res.status(400).json({ message: "Latitude and longitude are required" });
@@ -181,8 +181,28 @@ export const getNearbyTiffins = async (req: Request, res: Response): Promise<voi
 
         // Build tiffin query
         let query: any = { isAvailable: true };
-        if (type) query.type = type;
-        if (mealType) query.mealType = mealType;
+
+        // Handle array or string for type and mealType
+        if (type) {
+            query.type = Array.isArray(type) ? { $in: type } : type;
+        }
+
+        if (mealType) {
+            query.mealType = Array.isArray(mealType) ? { $in: mealType } : mealType;
+        }
+
+        if (search) {
+            query.$or = [
+                { name: { $regex: search, $options: "i" } },
+                { description: { $regex: search, $options: "i" } },
+            ];
+        }
+
+        if (minPrice || maxPrice) {
+            query.price = {};
+            if (minPrice) query.price.$gte = Number(minPrice);
+            if (maxPrice) query.price.$lte = Number(maxPrice);
+        }
 
         // Fetch all available tiffins with provider info
         const tiffins = await Tiffin.find(query).populate(
@@ -212,18 +232,29 @@ export const getNearbyTiffins = async (req: Request, res: Response): Promise<voi
             })
             .filter((tiffin) => {
                 // Filter out tiffins past their cutoff time
-                if (isPastCutoff(tiffin.cutoffTime)) return false;
+                // if (isPastCutoff(tiffin.cutoffTime)) return false;
                 // Include if no coordinates (show at end) or within radius
                 if (tiffin.distance === null) return true;
                 return tiffin.distance <= radiusKm;
             });
 
-        // Sort by distance (nulls at end)
+        // Sort the results based on 'sort' parameter, defaulting to distance
         tiffinsWithDistance.sort((a, b) => {
-            if (a.distance === null && b.distance === null) return 0;
-            if (a.distance === null) return 1;
-            if (b.distance === null) return -1;
-            return a.distance - b.distance;
+            if (sort === 'price_asc') {
+                return a.price - b.price;
+            } else if (sort === 'price_desc') {
+                return b.price - a.price;
+            } else if (sort === 'rating') {
+                const ratingA = a.rating || 0;
+                const ratingB = b.rating || 0;
+                return ratingB - ratingA;
+            } else {
+                // Default: distance_asc
+                if (a.distance === null && b.distance === null) return 0;
+                if (a.distance === null) return 1;
+                if (b.distance === null) return -1;
+                return a.distance - b.distance;
+            }
         });
 
         res.json(tiffinsWithDistance);

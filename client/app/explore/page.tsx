@@ -2,45 +2,19 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { useAuth } from "@/context/AuthContext";
 import { useLocation } from "@/context/LocationContext";
-import { Button } from "@/components/ui/button";
+import { useCart } from "@/context/CartContext";
+import Navbar from "@/components/Navbar";
 import {
-    UtensilsCrossed,
-    Search,
-    Filter,
-    Star,
-    Clock,
-    Leaf,
-    Drumstick,
-    Salad,
-    Sun,
-    Coffee,
-    Moon,
-    MapPin,
-    LogOut,
-    User,
-    Loader2,
     ChefHat,
-    ShoppingBag,
-    Navigation,
+    Star,
+    Plus,
+    Loader2,
+    SlidersHorizontal
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import TiffinDetailsModal from "@/components/TiffinDetailsModal";
-
-// Types
-interface Provider {
-    _id: string;
-    name: string;
-    address?: {
-        city?: string;
-    };
-    rating?: number;
-    reviewCount?: number;
-}
 
 interface Tiffin {
     _id: string;
@@ -48,557 +22,339 @@ interface Tiffin {
     description: string;
     price: number;
     type: "veg" | "non-veg" | "vegan";
-    mealType: "breakfast" | "lunch" | "dinner";
+    mealType: "breakfast" | "lunch" | "dinner" | "snacks";
     images: string[];
     isAvailable: boolean;
-    cutoffTime: string;
     rating?: number;
-    reviewCount?: number;
-    provider: Provider;
-    distance?: number; // Distance from customer in km
+    provider: { _id: string; name: string };
 }
 
-// Filter options
-const typeFilters = [
-    { value: "all", label: "All", icon: UtensilsCrossed },
-    { value: "veg", label: "Veg", icon: Leaf },
-    { value: "non-veg", label: "Non-Veg", icon: Drumstick },
-    { value: "vegan", label: "Vegan", icon: Salad },
-];
-
-const mealFilters = [
-    { value: "all", label: "All Meals", icon: UtensilsCrossed },
-    { value: "breakfast", label: "Breakfast", icon: Coffee },
-    { value: "lunch", label: "Lunch", icon: Sun },
-    { value: "dinner", label: "Dinner", icon: Moon },
-];
-
-export default function ExplorePage() {
-    const { user, isLoading: authLoading, logout, isAuthenticated } = useAuth();
-    // const { location, isLoading: locationLoading, requestLocation } = useLocation(); // Removed duplicate
+export default function MenuPage() {
+    const { isAuthenticated, isLoading: authLoading } = useAuth();
+    const { location, requestLocation } = useLocation();
+    const { addToCart } = useCart();
     const router = useRouter();
 
     const [tiffins, setTiffins] = useState<Tiffin[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState("");
-    const [searchQuery, setSearchQuery] = useState("");
-    const [typeFilter, setTypeFilter] = useState("all");
-    const [mealFilter, setMealFilter] = useState("all");
-    const [browseMode, setBrowseMode] = useState<"meals" | "kitchens">("meals");
-    const [selectedTiffin, setSelectedTiffin] = useState<Tiffin | null>(null);
-    const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
-    // Add setLocation to destructured context
-    const { location, setLocation, isLoading: locationLoading, requestLocation } = useLocation();
+    // Filters
+    const [dietFilter, setDietFilter] = useState<string>("");
+    const [mealFilter, setMealFilter] = useState<string>("");
+    const [priceRange, setPriceRange] = useState<number>(500);
+    const [ratingFilter, setRatingFilter] = useState<number>(0);
+    const [sortBy, setSortBy] = useState<string>("default");
 
-    // Redirect if not authenticated
+    // Auth redirect
     useEffect(() => {
         if (!authLoading && !isAuthenticated) {
             router.push("/login?role=customer");
         }
     }, [authLoading, isAuthenticated, router]);
 
-    // Fetch tiffins - use nearby endpoint if location available
     useEffect(() => {
+        if (!isAuthenticated || authLoading) return;
+        if (!location) {
+            requestLocation();
+            return;
+        }
+
         const fetchTiffins = async () => {
             try {
                 setIsLoading(true);
-                let endpoint = "/tiffins";
                 const params = new URLSearchParams();
 
-                // Use nearby endpoint if we have location
-                if (location) {
-                    endpoint = "/tiffins/nearby";
-                    params.append("lat", location.lat.toString());
-                    params.append("lng", location.lng.toString());
-                    params.append("radius", "15"); // 15km radius
+                params.set("lat", location.lat.toString());
+                params.set("lng", location.lng.toString());
+                params.set("radius", "15");
+
+                // Dietary
+                if (dietFilter === "Pure Veg") params.set("type", "veg");
+                if (dietFilter === "Non-Veg") params.set("type", "non-veg");
+                if (dietFilter === "Jain") params.set("type", "jain");
+                if (dietFilter === "Eggetarian") params.set("type", "eggetarian");
+
+                // Meal Type
+                if (mealFilter) params.set("mealType", mealFilter.toLowerCase());
+
+                // Price
+                params.set("maxPrice", priceRange.toString());
+
+                // Sort
+                if (sortBy === "price_asc") params.set("sort", "price_asc");
+                if (sortBy === "price_desc") params.set("sort", "price_desc");
+                if (sortBy === "popularity") params.set("sort", "rating");
+
+                const response = await axios.get(`/tiffins/nearby?${params.toString()}`);
+                let fetched = response.data;
+
+                if (ratingFilter > 0) {
+                    fetched = fetched.filter((t: Tiffin) => (t.rating || 0) >= ratingFilter);
                 }
 
-                if (searchQuery) params.append("keyword", searchQuery);
-                if (typeFilter !== "all") params.append("type", typeFilter);
-                if (mealFilter !== "all") params.append("mealType", mealFilter);
-
-                const response = await axios.get(`${endpoint}?${params.toString()}`);
-                setTiffins(response.data);
-                setError("");
-            } catch (err) {
-                console.error("Error fetching tiffins:", err);
-                setError("Failed to load tiffins. Please try again.");
+                setTiffins(fetched);
+            } catch (err: any) {
+                setError("Failed to load menus");
             } finally {
                 setIsLoading(false);
             }
         };
 
-        if (isAuthenticated) {
-            fetchTiffins();
-        }
-    }, [searchQuery, typeFilter, mealFilter, isAuthenticated, location]);
+        fetchTiffins();
+    }, [isAuthenticated, authLoading, location, requestLocation, dietFilter, mealFilter, priceRange, sortBy, ratingFilter]);
 
-    // Location Logic: Fallback to saved address or prompt
-    useEffect(() => {
-        if (!isAuthenticated || authLoading) return;
-
-        // If we already have a location (live or manual), do nothing
-        if (location) return;
-
-        const checkLocation = async () => {
-            // 1. Try to use User's Saved Address
-            const userAny = user as any;
-            if (userAny?.address?.coordinates?.lat && userAny?.address?.coordinates?.lng) {
-                console.log("📍 Using saved address from profile");
-                setLocation({
-                    lat: userAny.address.coordinates.lat,
-                    lng: userAny.address.coordinates.lng
-                });
-            }
-            // 2. If no saved address, prompt for Location
-            else {
-                // Small delay to let UI settle
-                setTimeout(() => {
-                    requestLocation();
-                }, 1000);
-            }
-        };
-
-        checkLocation();
-    }, [isAuthenticated, authLoading, location, user, setLocation, requestLocation]);
-
-    // Handle Tiffin Click
-    const handleTiffinClick = (tiffin: Tiffin) => {
-        setSelectedTiffin(tiffin);
-        setIsDetailsModalOpen(true);
-    };
-
-    // Handle Order from Modal
-    const handleOrder = (tiffin: Tiffin) => {
-        setIsDetailsModalOpen(false);
-        router.push(`/checkout?tiffinId=${tiffin._id}&quantity=1`);
-    };
-
-    // Get type badge color
-    const getTypeBadgeColor = (type: string) => {
-        switch (type) {
-            case "veg":
-                return "bg-green-100 text-green-700 border-green-200";
-            case "non-veg":
-                return "bg-red-100 text-red-700 border-red-200";
-            case "vegan":
-                return "bg-emerald-100 text-emerald-700 border-emerald-200";
-            default:
-                return "bg-gray-100 text-gray-700 border-gray-200";
-        }
-    };
-
-    // Get meal badge color
-    const getMealBadgeColor = (mealType: string) => {
-        switch (mealType) {
-            case "breakfast":
-                return "bg-yellow-100 text-yellow-700";
-            case "lunch":
-                return "bg-orange-100 text-orange-700";
-            case "dinner":
-                return "bg-purple-100 text-purple-700";
-            default:
-                return "bg-gray-100 text-gray-700";
-        }
-    };
-
-    // Show loading while checking auth
     if (authLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+            <div className="min-h-screen flex items-center justify-center bg-[#FDFBF7]">
                 <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
             </div>
         );
     }
 
-    // Don't render if not authenticated
     if (!isAuthenticated) {
         return null;
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            {/* ========== NAVBAR ========== */}
-            <header className="sticky top-0 z-50 bg-white border-b shadow-sm">
-                <div className="max-w-7xl mx-auto px-4 lg:px-8">
-                    <div className="flex items-center justify-between h-16">
-                        {/* Logo */}
-                        <Link href="/" className="flex items-center">
-                            <Image
-                                src="/logo.png"
-                                alt="GharSe"
-                                width={72}
-                                height={72}
-                                className="h-14 w-auto"
-                            />
-                        </Link>
+        <div className="min-h-screen bg-[#FDFBF7] text-gray-900 font-sans antialiased">
+            <Navbar />
 
-                        {/* Search Bar - Desktop */}
-                        <div className="hidden md:flex flex-1 max-w-xl mx-8">
-                            <div className="relative w-full">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                <input
-                                    type="text"
-                                    placeholder="Search for tiffins, cuisines..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full h-11 pl-12 pr-4 bg-gray-100 rounded-xl border-0 focus:ring-2 focus:ring-orange-400 focus:bg-white transition-all"
-                                />
-                            </div>
-                        </div>
-
-                        {/* User Menu */}
-                        <div className="flex items-center gap-4">
-                            <Link href="/orders" className="hidden sm:flex items-center gap-1 text-sm text-gray-600 hover:text-orange-600 transition-colors">
-                                <ShoppingBag className="w-4 h-4" />
-                                <span>Orders</span>
-                            </Link>
-                            <Link href="/profile" className="flex items-center gap-2 text-sm hover:opacity-80 transition-opacity">
-                                <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
-                                    <User className="w-4 h-4 text-orange-600" />
-                                </div>
-                                <span className="hidden sm:block font-medium text-gray-700">
-                                    {user?.name}
-                                </span>
-                            </Link>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={logout}
-                                className="text-gray-500 hover:text-red-600"
-                            >
-                                <LogOut className="w-4 h-4" />
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            {/* ========== BROWSE MODE TABS ========== */}
-            <div className="bg-white border-b">
-                <div className="max-w-7xl mx-auto px-4 lg:px-8">
-                    <div className="flex gap-1 pt-4">
-                        <button
-                            onClick={() => setBrowseMode("meals")}
-                            className={`flex items-center gap-2 px-6 py-3 font-semibold rounded-t-xl transition-all border-b-2 ${browseMode === "meals"
-                                ? "bg-orange-50 text-orange-600 border-orange-500"
-                                : "text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-50"
-                                }`}
-                        >
-                            <UtensilsCrossed className="w-5 h-5" />
-                            Browse Meals
-                        </button>
-                        <Link
-                            href="/kitchens"
-                            className="flex items-center gap-2 px-6 py-3 font-semibold rounded-t-xl transition-all border-b-2 text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-50"
-                        >
-                            <ChefHat className="w-5 h-5" />
-                            Browse Kitchens
-                        </Link>
-                    </div>
-                </div>
-            </div>
-
-            {/* ========== FILTERS ========== */}
-            <div className="bg-white border-b">
-                <div className="max-w-7xl mx-auto px-4 lg:px-8 py-4">
-                    {/* Mobile Search */}
-                    <div className="md:hidden mb-4">
-                        <div className="relative">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                            <input
-                                type="text"
-                                placeholder="Search for tiffins..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full h-11 pl-12 pr-4 bg-gray-100 rounded-xl border-0 focus:ring-2 focus:ring-orange-400"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Filter Pills */}
-                    <div className="flex flex-wrap gap-4">
-                        {/* Type Filter */}
-                        <div className="flex items-center gap-2">
-                            <Filter className="w-4 h-4 text-gray-500" />
-                            <div className="flex gap-2">
-                                {typeFilters.map((filter) => (
-                                    <button
-                                        key={filter.value}
-                                        onClick={() => setTypeFilter(filter.value)}
-                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${typeFilter === filter.value
-                                            ? "bg-orange-500 text-white shadow-md"
-                                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                            }`}
-                                    >
-                                        <filter.icon className="w-4 h-4" />
-                                        {filter.label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Meal Filter */}
-                        <div className="flex gap-2">
-                            {mealFilters.map((filter) => (
-                                <button
-                                    key={filter.value}
-                                    onClick={() => setMealFilter(filter.value)}
-                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${mealFilter === filter.value
-                                        ? "bg-orange-500 text-white shadow-md"
-                                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                        }`}
-                                >
-                                    <filter.icon className="w-4 h-4" />
-                                    {filter.label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* ========== MAIN CONTENT ========== */}
-            <main className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
-                {/* Location Banner */}
-                {!location && !locationLoading && (
-                    <div className="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl border border-orange-200 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                                <Navigation className="w-5 h-5 text-orange-600" />
-                            </div>
-                            <div>
-                                <p className="font-medium text-gray-900">Enable location for better results</p>
-                                <p className="text-sm text-gray-600">Find home chefs nearest to you</p>
-                            </div>
-                        </div>
-                        <Button
-                            onClick={requestLocation}
-                            className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-lg"
-                        >
-                            <MapPin className="w-4 h-4 mr-2" />
-                            Share Location
-                        </Button>
-                    </div>
-                )}
-
-                {/* Location Active Banner */}
-                {location && (
-                    <div className="mb-6 p-3 bg-green-50 rounded-xl border border-green-200 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4 text-green-600" />
-                            <span className="text-sm text-green-700">Showing providers near your location</span>
-                        </div>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={requestLocation}
-                            className="text-green-700 hover:bg-green-100"
-                            disabled={locationLoading}
-                        >
-                            {locationLoading ? (
-                                <Loader2 className="w-4 h-4 animate-spin mr-1" />
-                            ) : (
-                                <Navigation className="w-4 h-4 mr-1" />
-                            )}
-                            Update
-                        </Button>
-                    </div>
-                )}
-
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                        Explore Tiffins
+                    <div className="text-sm text-gray-500 mb-2 flex items-center gap-2">
+                        <Link href="/" className="hover:text-orange-500 transition-colors">Home</Link>
+                        <span>›</span>
+                        <span className="font-semibold text-gray-900">All Menus</span>
+                    </div>
+                    <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 tracking-tight mb-3">
+                        Discover Home-Cooked Meals
                     </h1>
-                    <p className="text-gray-600">
-                        Discover delicious homemade meals from trusted providers near you
+                    <p className="text-lg text-gray-500">
+                        Authentic tiffins from top local home chefs.
                     </p>
                 </div>
 
-                {/* Loading State */}
-                {isLoading && (
-                    <div className="flex items-center justify-center py-20">
-                        <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
-                    </div>
-                )}
+                <div className="flex flex-col lg:flex-row gap-8">
+                    {/* Sidebar Filters */}
+                    <aside className="w-full lg:w-[280px] flex-shrink-0">
+                        <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100 sticky top-24">
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="font-bold text-lg flex items-center gap-2">
+                                    <SlidersHorizontal className="w-5 h-5 text-gray-500" /> Filters
+                                </h2>
+                                {(dietFilter || mealFilter || priceRange < 500 || ratingFilter > 0) && (
+                                    <button onClick={() => {
+                                        setDietFilter("");
+                                        setMealFilter("");
+                                        setPriceRange(500);
+                                        setRatingFilter(0);
+                                    }} className="text-sm text-orange-500 font-semibold hover:underline">
+                                        Reset
+                                    </button>
+                                )}
+                            </div>
 
-                {/* Error State */}
-                {error && (
-                    <div className="text-center py-20">
-                        <p className="text-red-500 mb-4">{error}</p>
-                        <Button
-                            onClick={() => window.location.reload()}
-                            variant="outline"
-                        >
-                            Try Again
-                        </Button>
-                    </div>
-                )}
+                            {/* Dietary */}
+                            <div className="mb-8">
+                                <h3 className="font-semibold text-gray-900 mb-3 text-sm">Dietary</h3>
+                                <div className="space-y-3">
+                                    {["Pure Veg", "Non-Veg", "Jain", "Eggetarian"].map((diet) => (
+                                        <label key={diet} className="flex items-center gap-3 cursor-pointer group">
+                                            <div className="relative flex items-center justify-center">
+                                                <input
+                                                    type="radio"
+                                                    name="dietary"
+                                                    checked={dietFilter === diet}
+                                                    onChange={() => setDietFilter(diet)}
+                                                    className="peer sr-only"
+                                                />
+                                                <div className="w-5 h-5 rounded-full border border-gray-300 bg-white peer-checked:border-[6px] peer-checked:border-orange-500 transition-all"></div>
+                                            </div>
+                                            <span className="text-sm font-medium text-gray-600 group-hover:text-gray-900">{diet}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
 
-                {/* Empty State */}
-                {!isLoading && !error && tiffins.length === 0 && (
-                    <div className="text-center py-20">
-                        <div className="w-20 h-20 mx-auto mb-6 bg-orange-100 rounded-full flex items-center justify-center">
-                            <UtensilsCrossed className="w-10 h-10 text-orange-500" />
+                            {/* Meal Type */}
+                            <div className="mb-8 border-t border-gray-100 pt-6">
+                                <h3 className="font-semibold text-gray-900 mb-3 text-sm">Meal Type</h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {["Breakfast", "Lunch", "Dinner", "Snacks"].map((meal) => (
+                                        <button
+                                            key={meal}
+                                            onClick={() => setMealFilter(mealFilter === meal ? "" : meal)}
+                                            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${mealFilter === meal ? 'bg-orange-500 text-white shadow-md' : 'bg-white border border-gray-200 text-gray-600 hover:border-orange-500 hover:text-orange-500'}`}
+                                        >
+                                            {meal}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Price Range */}
+                            <div className="mb-8 border-t border-gray-100 pt-6">
+                                <div className="flex items-center justify-between mb-3 text-sm font-semibold">
+                                    <h3 className="text-gray-900">Price Range</h3>
+                                    <span className="text-gray-500">₹50 - ₹{priceRange}</span>
+                                </div>
+                                <input
+                                    type="range"
+                                    min="50"
+                                    max="500"
+                                    step="10"
+                                    value={priceRange}
+                                    onChange={(e) => setPriceRange(Number(e.target.value))}
+                                    className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-orange-500"
+                                />
+                            </div>
+
+                            {/* Chef Rating */}
+                            <div className="border-t border-gray-100 pt-6">
+                                <h3 className="font-semibold text-gray-900 mb-3 text-sm">Chef Rating</h3>
+                                <div className="space-y-3">
+                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                        <div className="relative flex items-center justify-center">
+                                            <input
+                                                type="radio"
+                                                name="rating"
+                                                checked={ratingFilter === 4}
+                                                onChange={() => setRatingFilter(4)}
+                                                className="peer sr-only"
+                                            />
+                                            <div className="w-5 h-5 rounded-full border border-gray-300 bg-white peer-checked:border-[6px] peer-checked:border-orange-500 transition-all"></div>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            {[1, 2, 3, 4, 5].map(star => (
+                                                <Star key={star} className={`w-4 h-4 ${star <= 4 ? "text-orange-500 fill-orange-500" : "text-gray-300"}`} />
+                                            ))}
+                                            <span className="text-sm font-medium text-gray-600 ml-1">& Up</span>
+                                        </div>
+                                    </label>
+                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                        <div className="relative flex items-center justify-center">
+                                            <input
+                                                type="radio"
+                                                name="rating"
+                                                checked={ratingFilter === 5}
+                                                onChange={() => setRatingFilter(5)}
+                                                className="peer sr-only"
+                                            />
+                                            <div className="w-5 h-5 rounded-full border border-gray-300 bg-white peer-checked:border-[6px] peer-checked:border-orange-500 transition-all"></div>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            {[1, 2, 3, 4, 5].map(star => (
+                                                <Star key={star} className={`w-4 h-4 ${star <= 5 ? "text-orange-500 fill-orange-500" : "text-gray-300"}`} />
+                                            ))}
+                                            <span className="text-sm font-medium text-gray-600 ml-1">& Up</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                            No tiffins found
-                        </h3>
-                        <p className="text-gray-600 mb-6">
-                            {searchQuery || typeFilter !== "all" || mealFilter !== "all"
-                                ? "Try adjusting your filters or search query"
-                                : "No tiffins available at the moment. Check back soon!"}
-                        </p>
-                        {(searchQuery || typeFilter !== "all" || mealFilter !== "all") && (
-                            <Button
-                                onClick={() => {
-                                    setSearchQuery("");
-                                    setTypeFilter("all");
-                                    setMealFilter("all");
-                                }}
-                                variant="outline"
-                            >
-                                Clear Filters
-                            </Button>
+                    </aside>
+
+                    {/* Main Grid List */}
+                    <div className="flex-1">
+                        <div className="flex items-center justify-between mb-6">
+                            <p className="text-gray-500 text-sm">
+                                Showing <span className="font-bold text-gray-900">{tiffins.length}</span> home-cooked meals
+                            </p>
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-500">Sort by:</span>
+                                <select
+                                    value={sortBy}
+                                    onChange={(e) => setSortBy(e.target.value)}
+                                    className="text-sm font-bold text-gray-900 bg-white border border-gray-200 rounded-full px-4 py-2 outline-none focus:border-orange-500 hover:border-gray-300 appearance-none shadow-sm cursor-pointer pr-8 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%234b5563%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:10px_10px] bg-[position:right_1rem_center] bg-no-repeat"
+                                >
+                                    <option value="popularity">Popularity</option>
+                                    <option value="price_asc">Price: Low to High</option>
+                                    <option value="price_desc">Price: High to Low</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {isLoading && tiffins.length === 0 ? (
+                            <div className="flex justify-center py-20">
+                                <Loader2 className="w-10 h-10 animate-spin text-orange-500" />
+                            </div>
+                        ) : tiffins.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {tiffins.map((tiffin) => (
+                                    <div key={tiffin._id} className="bg-white rounded-[1.5rem] overflow-hidden border border-gray-100 shadow-sm hover:shadow-lg transition-all flex flex-col group">
+                                        <div className="relative h-48 overflow-hidden">
+                                            <div className="absolute top-3 left-3 z-10">
+                                                <span className={`px-2.5 py-1 rounded shadow-sm text-[10px] font-bold tracking-wide uppercase ${tiffin.type === 'veg' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                    {tiffin.type === 'veg' ? 'VEG' : 'NON-VEG'}
+                                                </span>
+                                            </div>
+                                            <div className="absolute top-3 right-3 z-10 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                                                <Star className="w-3.5 h-3.5 text-orange-500 fill-orange-500" />
+                                                <span className="text-xs font-bold text-gray-900">{tiffin.rating?.toFixed(1) || "4.5"}</span>
+                                            </div>
+                                            <img
+                                                src={tiffin.images?.[0] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c'}
+                                                alt={tiffin.name}
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                            />
+                                        </div>
+                                        <div className="p-5 flex flex-col flex-grow">
+                                            <h3 className="font-bold text-lg text-gray-900 mb-1.5 leading-tight group-hover:text-orange-600 transition-colors">
+                                                {tiffin.name}
+                                            </h3>
+                                            <Link href={`/kitchens/${tiffin.provider?._id}`} className="text-sm text-gray-500 flex items-center gap-1.5 mb-3 hover:text-orange-500 transition-colors">
+                                                <ChefHat className="w-4 h-4" /> by {tiffin.provider?.name || "Home Chef"}
+                                            </Link>
+                                            <p className="text-sm text-gray-400 line-clamp-2 leading-relaxed mb-4 flex-grow">
+                                                {tiffin.description}
+                                            </p>
+                                            <div className="flex items-center justify-between mt-auto">
+                                                <div>
+                                                    <span className="text-xs text-gray-400 line-through mr-1 font-medium">₹{Math.round(tiffin.price * 1.2)}</span>
+                                                    <span className="text-xl font-extrabold text-gray-900">₹{tiffin.price}</span>
+                                                </div>
+                                                <button
+                                                    onClick={() => addToCart({
+                                                        tiffinId: tiffin._id,
+                                                        name: tiffin.name,
+                                                        price: tiffin.price,
+                                                        quantity: 1,
+                                                        providerId: tiffin.provider._id,
+                                                        type: tiffin.type,
+                                                        image: tiffin.images?.[0] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c'
+                                                    })}
+                                                    className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm px-4 py-2 rounded-full flex items-center gap-1 shadow-md shadow-orange-500/30 transition-all hover:scale-105 active:scale-95"
+                                                >
+                                                    <Plus className="w-4 h-4" /> Add
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-20">
+                                <ChefHat className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+                                <h3 className="text-xl font-bold text-gray-900 mb-2">No meals found</h3>
+                                <p className="text-gray-500">Try adjusting your filters or search radius to see more home-cooked meals.</p>
+                                <button onClick={() => { setDietFilter(""); setMealFilter(""); setPriceRange(500); setRatingFilter(0); }} className="mt-6 text-orange-500 font-bold hover:underline">
+                                    Clear all filters
+                                </button>
+                            </div>
+                        )}
+
+                        {tiffins.length > 0 && (
+                            <div className="flex justify-center mt-12 mb-8">
+                                <button className="px-8 py-3 bg-white border border-gray-200 text-gray-800 font-bold rounded-full shadow-sm hover:border-gray-300 hover:shadow-md transition-all">
+                                    Load More Menus
+                                </button>
+                            </div>
                         )}
                     </div>
-                )}
-
-                {/* Tiffin Grid */}
-                {!isLoading && !error && tiffins.length > 0 && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {tiffins.map((tiffin, index) => (
-                            <motion.div
-                                key={tiffin._id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.05 }}
-                                className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow group cursor-pointer"
-                            >
-                                {/* Image */}
-                                <div className="relative h-48 bg-gradient-to-br from-orange-100 to-red-50">
-                                    {tiffin.images && tiffin.images[0] ? (
-                                        <img
-                                            src={tiffin.images[0]}
-                                            alt={tiffin.name}
-                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                                        />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center">
-                                            <UtensilsCrossed className="w-16 h-16 text-orange-300" />
-                                        </div>
-                                    )}
-                                    {/* Type Badge */}
-                                    <div
-                                        className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-semibold border ${getTypeBadgeColor(
-                                            tiffin.type
-                                        )}`}
-                                    >
-                                        {tiffin.type.charAt(0).toUpperCase() + tiffin.type.slice(1)}
-                                    </div>
-                                    {/* Meal Type Badge */}
-                                    <div
-                                        className={`absolute top-3 right-3 px-2.5 py-1 rounded-full text-xs font-semibold ${getMealBadgeColor(
-                                            tiffin.mealType
-                                        )}`}
-                                    >
-                                        {tiffin.mealType.charAt(0).toUpperCase() +
-                                            tiffin.mealType.slice(1)}
-                                    </div>
-                                </div>
-
-                                {/* Content */}
-                                <div className="p-4">
-                                    <h3 className="font-semibold text-gray-900 mb-1 truncate">
-                                        {tiffin.name}
-                                    </h3>
-                                    <p className="text-sm text-gray-500 mb-3 line-clamp-2">
-                                        {tiffin.description}
-                                    </p>
-
-                                    {/* Provider Info */}
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
-                                            <ChefHat className="w-3.5 h-3.5 text-green-600" />
-                                        </div>
-                                        <span className="text-sm text-gray-600 truncate">
-                                            {tiffin.provider?.name || "Home Chef"}
-                                        </span>
-                                        {tiffin.distance !== undefined && tiffin.distance !== null && (
-                                            <>
-                                                <Navigation className="w-3.5 h-3.5 text-orange-500" />
-                                                <span className="text-xs font-medium text-orange-600">
-                                                    {tiffin.distance} km
-                                                </span>
-                                            </>
-                                        )}
-                                        {!tiffin.distance && tiffin.provider?.address?.city && (
-                                            <>
-                                                <MapPin className="w-3.5 h-3.5 text-gray-400" />
-                                                <span className="text-xs text-gray-500">
-                                                    {tiffin.provider.address.city}
-                                                </span>
-                                            </>
-                                        )}
-                                    </div>
-
-                                    {/* Rating & Cutoff */}
-                                    <div className="flex items-center justify-between mb-4">
-                                        <div className="flex items-center gap-1">
-                                            <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                                            <span className="text-sm font-medium">
-                                                {tiffin.rating?.toFixed(1) || "New"}
-                                            </span>
-                                            {tiffin.reviewCount && tiffin.reviewCount > 0 && (
-                                                <span className="text-xs text-gray-400">
-                                                    ({tiffin.reviewCount})
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-1 text-gray-500">
-                                            <Clock className="w-3.5 h-3.5" />
-                                            <span className="text-xs">
-                                                Order by {tiffin.cutoffTime}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    {/* Price & Order Button */}
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <span className="text-2xl font-bold text-gray-900">
-                                                ₹{tiffin.price}
-                                            </span>
-                                            <span className="text-sm text-gray-500">/meal</span>
-                                        </div>
-                                        <Button
-                                            size="sm"
-                                            className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-lg"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleTiffinClick(tiffin);
-                                            }}
-                                        >
-                                            <ShoppingBag className="w-4 h-4 mr-1" />
-                                            View
-                                        </Button>
-                                    </div>
-                                </div>
-                            </motion.div>
-                        ))}
-                    </div>
-                )}
-
-                {/* Tiffin Details Modal */}
-                <TiffinDetailsModal
-                    tiffin={selectedTiffin}
-                    isOpen={isDetailsModalOpen}
-                    onClose={() => setIsDetailsModalOpen(false)}
-                    onOrder={handleOrder}
-                />
-            </main>
+                </div>
+            </div>
         </div>
     );
 }
