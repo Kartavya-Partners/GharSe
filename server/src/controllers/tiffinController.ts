@@ -231,8 +231,8 @@ export const getNearbyTiffins = async (req: Request, res: Response): Promise<voi
                 };
             })
             .filter((tiffin) => {
-                // Filter out tiffins past their cutoff time
-                // if (isPastCutoff(tiffin.cutoffTime)) return false;
+                // Filter out tiffins past their cutoff time (hidden from customers, not deleted)
+                if (isPastCutoff(tiffin.cutoffTime)) return false;
                 // Include if no coordinates (show at end) or within radius
                 if (tiffin.distance === null) return true;
                 return tiffin.distance <= radiusKm;

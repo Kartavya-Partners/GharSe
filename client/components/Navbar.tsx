@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 export default function Navbar() {
     const pathname = usePathname();
     const router = useRouter();
-    const { isAuthenticated, user, logout } = useAuth();
+    const { isAuthenticated, isLoading, user, logout } = useAuth();
     const { cartCount } = useCart();
     const [isCartOpen, setIsCartOpen] = useState(false);
 
@@ -34,7 +34,7 @@ export default function Navbar() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16">
                     {/* Logo */}
-                    <Link href="/" className="flex items-center gap-2.5 group">
+                    <Link href={isAuthenticated && user ? `/dashboard/${user.role}` : "/"} className="flex items-center gap-2.5 group">
                         <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform">
                             <UtensilsCrossed className="w-5 h-5" />
                         </div>
@@ -53,7 +53,12 @@ export default function Navbar() {
 
                     {/* Auth / Profile Actions */}
                     <div className="flex items-center gap-3">
-                        {isAuthenticated && user ? (
+                        {isLoading ? (
+                            /* Show a subtle skeleton while auth state loads */
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse" />
+                            </div>
+                        ) : isAuthenticated && user ? (
                             <>
                                 <NotificationDropdown />
                                 <Link

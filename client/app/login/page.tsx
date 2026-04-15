@@ -474,7 +474,7 @@ function LoginForm() {
                                         id="password"
                                         name="password"
                                         type={showPassword ? "text" : "password"}
-                                        placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                                        placeholder="Enter your password"
                                         required
                                         value={formData.password}
                                         onChange={handleChange}
