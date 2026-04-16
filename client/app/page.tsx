@@ -213,16 +213,26 @@ export default function Home() {
 
             {/* CTA */}
             <div className="flex items-center gap-3 z-10">
-              <Link href="/login?role=customer" className="hidden sm:block">
-                <button className="text-gray-700 font-semibold text-sm hover:text-orange-500 transition-colors px-4 py-2">
-                  Login
-                </button>
-              </Link>
-              <Link href="/login?role=provider">
-                <button className="bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 text-white rounded-xl px-6 py-2.5 text-sm font-bold shadow-glow hover:scale-105 transition-all active:scale-95 border-t border-white/30">
-                  Get Started
-                </button>
-              </Link>
+              {isAuthenticated && user ? (
+                <Link href={`/dashboard/${user.role}`}>
+                  <button className="bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 text-white rounded-xl px-6 py-2.5 text-sm font-bold shadow-glow hover:scale-105 transition-all active:scale-95 border-t border-white/30">
+                    Dashboard
+                  </button>
+                </Link>
+              ) : (
+                <>
+                  <Link href="/login?role=customer" className="hidden sm:block">
+                    <button className="text-gray-700 font-semibold text-sm hover:text-orange-500 transition-colors px-4 py-2">
+                      Login
+                    </button>
+                  </Link>
+                  <Link href="/login?role=provider">
+                    <button className="bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 text-white rounded-xl px-6 py-2.5 text-sm font-bold shadow-glow hover:scale-105 transition-all active:scale-95 border-t border-white/30">
+                      Get Started
+                    </button>
+                  </Link>
+                </>
+              )}
               {/* Mobile Toggle */}
               <button
                 className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -262,13 +272,23 @@ export default function Home() {
                   </Link>
                 )
               )}
-              <Link
-                href="/login?role=customer"
-                className="block text-orange-500 font-semibold py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Login
-              </Link>
+              {isAuthenticated && user ? (
+                <Link
+                  href={`/dashboard/${user.role}`}
+                  className="block text-orange-500 font-semibold py-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Dashboard
+                </Link>
+              ) : (
+                <Link
+                  href="/login?role=customer"
+                  className="block text-orange-500 font-semibold py-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Login
+                </Link>
+              )}
             </div>
           </motion.div>
         )}
@@ -355,25 +375,40 @@ export default function Home() {
 
               <RevealOnScroll delay={800} direction="up">
                 <div className="flex flex-col sm:flex-row gap-6 justify-center lg:justify-start">
-                  <Link
-                    href="/login?role=customer"
-                    className="bg-gradient-to-br from-orange-400 via-orange-500 to-orange-700 text-white px-10 py-5 rounded-2xl text-lg font-bold shadow-glow flex items-center justify-center gap-3 transition-all hover:scale-105 hover:shadow-neon active:scale-95 group border-t border-white/30 relative overflow-hidden"
-                  >
-                    <div className="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out"></div>
-                    <span className="material-symbols-outlined group-hover:animate-bounce relative z-10">
-                      takeout_dining
-                    </span>
-                    <span className="relative z-10">Order Tiffin</span>
-                  </Link>
-                  <Link
-                    href="/login?role=provider"
-                    className="bg-white/50 backdrop-blur-md text-gray-900 border-2 border-white/50 px-10 py-5 rounded-2xl text-lg font-bold shadow-lg flex items-center justify-center gap-3 hover:bg-white hover:text-orange-500 transition-all hover:scale-105 active:scale-95 hover:border-orange-200"
-                  >
-                    <span className="material-symbols-outlined transition-transform group-hover:rotate-12">
-                      chef_hat
-                    </span>
-                    Become a Provider
-                  </Link>
+                  {isAuthenticated && user ? (
+                    <Link
+                      href={`/dashboard/${user.role}`}
+                      className="bg-gradient-to-br from-orange-400 via-orange-500 to-orange-700 text-white px-10 py-5 rounded-2xl text-lg font-bold shadow-glow flex items-center justify-center gap-3 transition-all hover:scale-105 hover:shadow-neon active:scale-95 group border-t border-white/30 relative overflow-hidden"
+                    >
+                      <div className="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out"></div>
+                      <span className="material-symbols-outlined group-hover:animate-bounce relative z-10">
+                        dashboard
+                      </span>
+                      <span className="relative z-10">Go to Dashboard</span>
+                    </Link>
+                  ) : (
+                    <>
+                      <Link
+                        href="/login?role=customer"
+                        className="bg-gradient-to-br from-orange-400 via-orange-500 to-orange-700 text-white px-10 py-5 rounded-2xl text-lg font-bold shadow-glow flex items-center justify-center gap-3 transition-all hover:scale-105 hover:shadow-neon active:scale-95 group border-t border-white/30 relative overflow-hidden"
+                      >
+                        <div className="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out"></div>
+                        <span className="material-symbols-outlined group-hover:animate-bounce relative z-10">
+                          takeout_dining
+                        </span>
+                        <span className="relative z-10">Order Tiffin</span>
+                      </Link>
+                      <Link
+                        href="/login?role=provider"
+                        className="bg-white/50 backdrop-blur-md text-gray-900 border-2 border-white/50 px-10 py-5 rounded-2xl text-lg font-bold shadow-lg flex items-center justify-center gap-3 hover:bg-white hover:text-orange-500 transition-all hover:scale-105 active:scale-95 hover:border-orange-200"
+                      >
+                        <span className="material-symbols-outlined transition-transform group-hover:rotate-12">
+                          chef_hat
+                        </span>
+                        Become a Provider
+                      </Link>
+                    </>
+                  )}
                 </div>
               </RevealOnScroll>
 

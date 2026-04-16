@@ -25,7 +25,7 @@ export default function CustomerSidebar() {
         <aside className="w-[240px] bg-white border-r border-gray-100 min-h-screen flex flex-col sticky top-0">
             {/* Logo */}
             <div className="p-6 pb-4">
-                <Link href="/" className="flex items-center gap-2">
+                <Link href="/dashboard/customer" className="flex items-center gap-2">
                     <div className="w-9 h-9 bg-orange-500 rounded-xl flex items-center justify-center">
                         <span className="text-white font-bold text-sm">G</span>
                     </div>

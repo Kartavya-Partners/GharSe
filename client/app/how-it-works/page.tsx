@@ -19,6 +19,7 @@ import {
     Shield,
 } from "lucide-react";
 import Footer from "@/components/Footer";
+import Navbar from "@/components/Navbar";
 
 const fadeUp = {
     hidden: { opacity: 0, y: 40 },
@@ -162,32 +163,7 @@ export default function HowItWorksPage() {
     return (
         <div className="min-h-screen bg-[#FDFBF7] text-gray-900 font-sans antialiased overflow-x-hidden">
             {/* ========== NAVBAR ========== */}
-            <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100 shadow-sm">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center h-16">
-                        <Link href="/" className="flex items-center gap-2.5 group">
-                            <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform">
-                                <UtensilsCrossed className="w-5 h-5" />
-                            </div>
-                            <span className="text-xl font-extrabold tracking-tight">
-                                Ghar<span className="text-orange-500">Se</span>
-                            </span>
-                        </Link>
-                        <div className="hidden md:flex items-center gap-8">
-                            <Link href="/explore" className="text-sm font-semibold text-gray-500 hover:text-orange-500 transition-colors">Menu</Link>
-                            <Link href="/how-it-works" className="text-sm font-bold text-orange-500 border-b-2 border-orange-500 pb-1">How it Works</Link>
-                            <Link href="/kitchens" className="text-sm font-semibold text-gray-500 hover:text-orange-500 transition-colors">Chefs</Link>
-                            <Link href="/stories" className="text-sm font-semibold text-gray-500 hover:text-orange-500 transition-colors">Stories</Link>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <Link href="/login" className="text-sm font-semibold text-gray-600 hover:text-orange-500 transition-colors">Login</Link>
-                            <Link href="/login" className="px-5 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold rounded-full transition-all shadow-md shadow-orange-500/20 hover:shadow-lg hover:shadow-orange-500/30">
-                                Sign Up
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-            </nav>
+            <Navbar />
 
             {/* ========== HERO ========== */}
             <section className="relative py-20 md:py-28 text-center overflow-hidden">
