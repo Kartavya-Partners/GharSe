@@ -45,6 +45,7 @@ export default function MenuPage() {
     const [priceRange, setPriceRange] = useState<number>(500);
     const [ratingFilter, setRatingFilter] = useState<number>(0);
     const [sortBy, setSortBy] = useState<string>("default");
+    const [visibleCount, setVisibleCount] = useState<number>(9);
 
     // Auth redirect
     useEffect(() => {
@@ -94,6 +95,7 @@ export default function MenuPage() {
                 }
 
                 setTiffins(fetched);
+                setVisibleCount(9); // Reset visible items when new filters are applied
             } catch (err: any) {
                 setError("Failed to load menus");
             } finally {
@@ -282,7 +284,7 @@ export default function MenuPage() {
                             </div>
                         ) : tiffins.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {tiffins.map((tiffin) => (
+                                {tiffins.slice(0, visibleCount).map((tiffin) => (
                                     <div key={tiffin._id} className="bg-white rounded-[1.5rem] overflow-hidden border border-gray-100 shadow-sm hover:shadow-lg transition-all flex flex-col group">
                                         <div className="relative h-48 overflow-hidden">
                                             <div className="absolute top-3 left-3 z-10">
@@ -345,9 +347,12 @@ export default function MenuPage() {
                             </div>
                         )}
 
-                        {tiffins.length > 0 && (
+                        {tiffins.length > visibleCount && (
                             <div className="flex justify-center mt-12 mb-8">
-                                <button className="px-8 py-3 bg-white border border-gray-200 text-gray-800 font-bold rounded-full shadow-sm hover:border-gray-300 hover:shadow-md transition-all">
+                                <button 
+                                    onClick={() => setVisibleCount(prev => prev + 9)}
+                                    className="px-8 py-3 bg-white border border-gray-200 text-gray-800 font-bold rounded-full shadow-sm hover:border-gray-300 hover:shadow-md transition-all"
+                                >
                                     Load More Menus
                                 </button>
                             </div>

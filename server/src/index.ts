@@ -31,7 +31,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/providers", providerRoutes);
-app.use("/api/uploads", uploadRoutes);
+app.use("/api/upload", uploadRoutes);
 app.use("/api/weekly-menu", weeklyMenuRoutes);
 
 // Health check

@@ -15,8 +15,6 @@ import {
 const navItems = [
     { href: "/dashboard/customer", label: "My Food Journey", icon: LayoutDashboard },
     { href: "/orders", label: "Order History", icon: History },
-    { href: "/dashboard/customer/favorites", label: "Favorite Chefs", icon: Heart },
-    { href: "/dashboard/customer/wallet", label: "Wallet", icon: Wallet, badge: "₹450" },
 ];
 
 export default function CustomerSidebar() {
@@ -52,14 +50,6 @@ export default function CustomerSidebar() {
                                 <item.icon className="w-5 h-5" />
                                 <span>{item.label}</span>
                             </div>
-                            {item.badge && (
-                                <span
-                                    className={`text-xs font-semibold ${isActive ? "text-orange-100" : "text-orange-500"
-                                        }`}
-                                >
-                                    {item.badge}
-                                </span>
-                            )}
                         </Link>
                     );
                 })}
