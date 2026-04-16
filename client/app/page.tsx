@@ -154,13 +154,7 @@ const testimonials = [
   },
 ];
 
-// ===== STATS DATA =====
-const stats = [
-  { value: "500+", label: "Home Chefs", icon: "chef_hat" },
-  { value: "50K+", label: "Happy Customers", icon: "groups" },
-  { value: "1M+", label: "Meals Delivered", icon: "takeout_dining" },
-  { value: "4.8", label: "Average Rating", icon: "star" },
-];
+
 
 // ===== MAIN COMPONENT =====
 export default function Home() {
@@ -484,29 +478,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ========== STATS SECTION ========== */}
-      <section className="py-16 bg-white border-y border-gray-100 relative z-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <RevealOnScroll key={stat.label} delay={index * 100}>
-                <div className="text-center group cursor-default">
-                  <span
-                    className="material-symbols-outlined text-4xl text-orange-400 mb-3 block group-hover:scale-110 transition-transform"
-                    style={{ fontVariationSettings: "'FILL' 1" }}
-                  >
-                    {stat.icon}
-                  </span>
-                  <p className="text-4xl md:text-5xl font-black text-gray-900 mb-1 group-hover:text-orange-500 transition-colors">
-                    {stat.value}
-                  </p>
-                  <p className="text-gray-500 font-semibold">{stat.label}</p>
-                </div>
-              </RevealOnScroll>
-            ))}
-          </div>
-        </div>
-      </section>
+
 
       {/* ========== FEATURES SECTION ========== */}
       <section id="features" className="py-24 bg-[#fffbf7] relative">
